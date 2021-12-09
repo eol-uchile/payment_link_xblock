@@ -125,8 +125,8 @@ class PaymentLinkXBlock(StudioEditableXBlockMixin, XBlock):
         try:
             user = User.objects.get(id=self.scope_ids.user_id)
             enrollment = CourseEnrollment.get_enrollment(user, self.course_id)
-        except:
-            log.error('PaymentLink - Error, Not Exists User or Enrollment, user: {}, course: {}'.format(self.scope_ids.user_id, self.course_id))
+        except Exception as e:
+            log.error('PaymentLink - Error, Not Exists User or Enrollment, user: {}, course: {}, exception: {}'.format(self.scope_ids.user_id, self.course_id, str(e)))
             enrollment = None
         if enrollment is None:
             context.update({'is_enrolled': False})
