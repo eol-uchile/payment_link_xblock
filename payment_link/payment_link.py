@@ -75,6 +75,20 @@ class PaymentLinkXBlock(StudioEditableXBlockMixin, XBlock):
         """
         return six.text_type(self.scope_ids.usage_id)
 
+    def is_course_staff(self):
+        # pylint: disable=no-member
+        """
+         Check if user is course staff.
+        """
+        return getattr(self.xmodule_runtime, 'user_is_staff', False)
+
+    def show_staff_grading_interface(self):
+        """
+        Return if current user is staff and not in studio.
+        """
+        in_studio_preview = self.scope_ids.user_id is None
+        return self.is_course_staff() and not in_studio_preview
+
     def author_view(self, context=None):
         context = self.get_context_author()
         template = self.render_template(
@@ -116,32 +130,33 @@ class PaymentLinkXBlock(StudioEditableXBlockMixin, XBlock):
             'xblock': self,
             'location': str(self.location).split('@')[-1],
             'is_enabled': False,
-            'is_enrolled':True
+            'is_enrolled': True,
+            'is_staff': False
         }
         from common.djangoapps.course_modes.models import CourseMode
         from common.djangoapps.student.models import CourseEnrollment
         from django.contrib.auth.models import User
         
-        try:
-            user = User.objects.get(id=self.scope_ids.user_id)
-            enrollment = CourseEnrollment.get_enrollment(user, self.course_id)
-        except Exception as e:
-            log.error('PaymentLink - Error, Not Exists User or Enrollment, user: {}, course: {}, exception: {}'.format(self.scope_ids.user_id, self.course_id, str(e)))
-            enrollment = None
-        if enrollment is None:
-            context.update({'is_enrolled': False})
-            log.error('PaymentLink - Error, Not Exists CourseEnrollment, user: {}, course: {}'.format(self.scope_ids.user_id, self.course_id))
+        if self.show_staff_grading_interface():
+            context['is_staff'] = True
         else:
-            modes = CourseMode.modes_for_course_dict(self.course_id)
-            if 'verified' in modes:
-                ecommerce_service = EcommerceService()
-                context.update({
-                    'is_enabled': True,
-                    'ecommerce_payment_page': ecommerce_service.payment_page_url(),
-                    'verified_sku': modes['verified'].sku
-                })
-            else:
-                log.error('PaymentLink - Error, Course: {}  dont have verified_sku, user: {}'.format(self.course_id, self.scope_ids.user_id))
+            try:
+                user = User.objects.get(id=self.scope_ids.user_id)
+                enrollment = CourseEnrollment.get_enrollment(user, self.course_id)
+            except Exception as e:
+                log.error('PaymentLink - Error, Not Exists User or Enrollment, user: {}, course: {}, exception: {}'.format(self.scope_ids.user_id, self.course_id, str(e)))
+                context.update({'is_enrolled': False})
+
+        modes = CourseMode.modes_for_course_dict(self.course_id)
+        if 'verified' in modes:
+            ecommerce_service = EcommerceService()
+            context.update({
+                'is_enabled': True,
+                'ecommerce_payment_page': ecommerce_service.payment_page_url(),
+                'verified_sku': modes['verified'].sku
+            })
+        else:
+            log.error('PaymentLink - Error, Course: {}  dont have verified_sku, user: {}'.format(self.course_id, self.scope_ids.user_id))
         return context
 
     def get_context_author(self):

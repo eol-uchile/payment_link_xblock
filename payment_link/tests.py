@@ -14,8 +14,6 @@ from common.djangoapps.student.tests.factories import UserFactory, CourseEnrollm
 from xmodule.modulestore.tests.factories import CourseFactory, ItemFactory
 from xmodule.modulestore import ModuleStoreEnum
 from xmodule.modulestore.tests.django_utils import ModuleStoreTestCase
-from openedx.core.djangoapps.content.course_overviews.models import CourseOverview
-from common.djangoapps.student.roles import CourseInstructorRole, CourseStaffRole
 from common.djangoapps.course_modes.models import CourseMode
 from xblock.field_data import DictFieldData
 import json
@@ -63,14 +61,13 @@ class TestPaymentLinkXBlock(UrlResetMixin, ModuleStoreTestCase):
         with patch('common.djangoapps.student.models.cc.User.save'):
             # staff user
             self.client = Client()
-            user = UserFactory(
+            self.staff_user = UserFactory(
                 username='testuser101',
                 password='12345',
-                email='student@edx.org',
-                is_staff=True)
+                email='student@edx.org')
             self.client.login(username='testuser101', password='12345')
             CourseEnrollmentFactory(
-                user=user, course_id=self.course.id)
+                user=self.staff_user, course_id=self.course.id)
             # user student
             self.student_client = Client()
             self.student = UserFactory(
@@ -140,9 +137,30 @@ class TestPaymentLinkXBlock(UrlResetMixin, ModuleStoreTestCase):
         response = self.xblock.get_context_student()
         self.assertEqual(response['is_enabled'], True)
         self.assertEqual(response['is_enrolled'], True)
+        self.assertEqual(response['is_staff'], False)
         self.assertEqual(response['ecommerce_payment_page'], '/basket/add/')
         self.assertEqual(response['verified_sku'], 'ASD')
-    
+
+    def test_context_student_staff(self):
+        """
+            Test context student view, user is staff
+        """
+        CourseMode.objects.get_or_create(
+            course_id=self.course.id,
+            mode_display_name='verified',
+            mode_slug='verified',
+            min_price=1,
+            sku='ASD'
+        )
+        self.xblock.scope_ids.user_id = self.staff_user.id
+        self.xblock.xmodule_runtime.user_is_staff = True
+        response = self.xblock.get_context_student()
+        self.assertEqual(response['is_enabled'], True)
+        self.assertEqual(response['is_enrolled'], True)
+        self.assertEqual(response['is_staff'], True)
+        self.assertEqual(response['ecommerce_payment_page'], '/basket/add/')
+        self.assertEqual(response['verified_sku'], 'ASD')
+
     def test_context_student_not_course_mode(self):
         """
             Test context student view, when course mode is not configurated
@@ -151,6 +169,7 @@ class TestPaymentLinkXBlock(UrlResetMixin, ModuleStoreTestCase):
         response = self.xblock.get_context_student()
         self.assertEqual(response['is_enrolled'], True)
         self.assertEqual(response['is_enabled'], False)
+        self.assertEqual(response['is_staff'], False)
 
     def test_context_student_not_enrolled(self):
         """
@@ -159,3 +178,5 @@ class TestPaymentLinkXBlock(UrlResetMixin, ModuleStoreTestCase):
         self.xblock.scope_ids.user_id = None
         response = self.xblock.get_context_student()
         self.assertEqual(response['is_enrolled'], False)
+        self.assertEqual(response['is_enabled'], False)
+        self.assertEqual(response['is_staff'], False)
