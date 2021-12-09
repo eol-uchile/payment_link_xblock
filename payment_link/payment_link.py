@@ -164,16 +164,6 @@ class PaymentLinkXBlock(StudioEditableXBlockMixin, XBlock):
             log.error('PaymentLink - Error, Course: {} dont have verified_sku'.format(self.course_id))
         return context
 
-    def user_course_passed(self):
-        from lms.djangoapps.grades.course_grade_factory import CourseGradeFactory
-        from django.contrib.auth.models import User
-        try:
-            user = User.objects.get(id=self.scope_ids.user_id)
-            response = CourseGradeFactory().read(user, course_key=self.course_id)
-            return response.passed
-        except User.DoesNotExist:
-            return False
-
     @XBlock.json_handler
     def studio_submit(self, data, suffix=''):
         """
