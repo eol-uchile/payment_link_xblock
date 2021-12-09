@@ -1,0 +1,26 @@
+<div class="payment_link_block">
+   <h2>{{xblock.display_title}}</h2>
+   {% if is_enrolled %}
+      {% if is_enabled %}
+         <p class="Prrafobsico" style="text-align: justify; margin: 0cm 2.0cm .0001pt 2.0cm;"><span style="font-family: 'Helvetica','sans-serif'; mso-bidi-font-family: MinionPro-Regular; color: #262626; mso-themecolor: text1; mso-themetint: 217;" lang="ES-TRAD">Si te interesa acreditar tu desempeño en el curso, accede al Certificado de Formación de Extensión, cumpliendo con lo siguiente:</span></p>
+         <p class="Prrafobsico" style="text-align: justify; margin: 0cm 2.0cm .0001pt 2.0cm;"><span style="font-family: 'Helvetica','sans-serif'; mso-bidi-font-family: MinionPro-Regular;" lang="ES-TRAD">- Aprobar con un puntaje final, igual o superior al 60%, obtenido de la sumatoria de las pruebas parciales y la evaluación final de par</span>es.</p>
+         <p class="Prrafobsico" style="text-align: justify; margin: 0cm 2.0cm .0001pt 2.0cm;"><span style="font-family: 'Helvetica','sans-serif'; mso-bidi-font-family: MinionPro-Regular; color: #262626; mso-themecolor: text1; mso-themetint: 217;" lang="ES-TRAD"><o:p> </o:p></span></p>
+         <p class="Prrafobsico" style="text-align: justify; margin: 0cm 2.0cm .0001pt 2.0cm;"><span style="font-family: 'Helvetica','sans-serif'; color: #222222; background: white;" lang="ES-TRAD">- <a href="{{ecommerce_payment_page}}?sku={{verified_sku}}" target="_blank">Cancelar el importe</a> correspondiente en UAbierta, sigue las indicaciones en plataforma.<o:p></o:p></span></p>
+         <p class="Prrafobsico" style="text-align: justify; margin: 0cm 2.0cm .0001pt 2.0cm;"><span style="font-family: 'Helvetica','sans-serif'; color: #222222; background: white;" lang="ES-TRAD"><o:p> </o:p></span></p>
+         <p class="Prrafobsico" style="text-align: justify; margin: 0cm 2.0cm .0001pt 2.0cm;"><span style="font-family: 'Helvetica','sans-serif'; color: #222222; background: white;" lang="ES-TRAD">El documento se emitirá en formato digital, el cual podrá ser impreso o exportado en PDF, y se obtendrá directamente en plataforma del curso.<o:p></o:p></span></p>
+         <p class="Prrafobsico" style="text-align: justify; margin: 0cm 2.0cm .0001pt 2.0cm;"></p>
+         <p class="Prrafobsico" style="text-align: justify; margin: 0cm 2.0cm .0001pt 2.0cm;"><span style="font-family: 'Helvetica','sans-serif'; color: #222222; background: white;" lang="ES-TRAD">Revisa cómo obtenerlo <a href="https://uabierta.uchile.cl/static/edx-uabierta/uploads/instructivo_pago_20210426.pdf" target="_blank">aquí</a></span></p>
+
+      {% else %}
+      
+         <div class="alert alert-warning" style="line-height: 1;">
+            <p>El curso <strong>no se ha configurado correctamente</strong>.</p>
+            <p>Contáctese con el equipo del curso o mesa de ayuda.</p>
+         </div>
+      {% endif %}
+   {% else %}
+      <div class="alert alert-warning" style="line-height: 1;">
+         <p>Usuario no está inscrito en el curso.</p>
+      </div>
+   {% endif %}
+</div>
