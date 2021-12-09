@@ -144,7 +144,7 @@ class TestPaymentLinkXBlock(UrlResetMixin, ModuleStoreTestCase):
         self.assertEqual(response['verified_sku'], 'ASD')
     
     def test_context_student_not_course_mode(self):
-         """
+        """
             Test context student view, when course mode is not configurated
         """
         self.xblock.scope_ids.user_id = self.student.id
@@ -153,7 +153,7 @@ class TestPaymentLinkXBlock(UrlResetMixin, ModuleStoreTestCase):
         self.assertEqual(response['is_enabled'], False)
 
     def test_context_student_not_enrolled(self):
-         """
+        """
             Test context student view, when user is None
         """
         self.xblock.scope_ids.user_id = None
