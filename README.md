@@ -16,4 +16,5 @@
 ## Notes
 
 - Need Course Mode Verified SKU configurated to show the link
+- Archived Courses dont show the xblock
 
