@@ -17,6 +17,7 @@ from django.template import Context, Template
 from opaque_keys import InvalidKeyError
 from opaque_keys.edx.keys import CourseKey
 from django.http import Http404, HttpResponse
+from django.utils import timezone
 from django.urls import reverse
 
 
@@ -131,7 +132,8 @@ class PaymentLinkXBlock(StudioEditableXBlockMixin, XBlock):
             'location': str(self.location).split('@')[-1],
             'is_enabled': False,
             'is_enrolled': True,
-            'is_staff': False
+            'is_staff': False,
+            'is_expired': self.is_course_expired()
         }
         from common.djangoapps.course_modes.models import CourseMode
         from common.djangoapps.student.models import CourseEnrollment
@@ -163,7 +165,8 @@ class PaymentLinkXBlock(StudioEditableXBlockMixin, XBlock):
         context = {
             'xblock': self,
             'location': str(self.location).split('@')[-1],
-            'is_enabled': False
+            'is_enabled': False,
+            'is_expired': self.is_course_expired()
         }
         from common.djangoapps.course_modes.models import CourseMode
 
@@ -178,6 +181,17 @@ class PaymentLinkXBlock(StudioEditableXBlockMixin, XBlock):
         else:
             log.error('PaymentLink - Error, Course: {} dont have verified_sku'.format(self.course_id))
         return context
+
+    def is_course_expired(self):
+        """
+            Verify if course is expired
+        """
+        from openedx.core.djangoapps.content.course_overviews.models import CourseOverview
+        now = timezone.now()
+        course = CourseOverview.objects.get(id=self.course_id)
+        if course.end_date is not None:
+            return course.end_date < now
+        return False
 
     @XBlock.json_handler
     def studio_submit(self, data, suffix=''):

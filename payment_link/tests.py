@@ -11,11 +11,13 @@ from common.djangoapps.util.testing import UrlResetMixin
 from urllib.parse import parse_qs
 from opaque_keys.edx.locator import CourseLocator
 from common.djangoapps.student.tests.factories import UserFactory, CourseEnrollmentFactory
+from openedx.core.djangoapps.content.course_overviews.models import CourseOverview
 from xmodule.modulestore.tests.factories import CourseFactory, ItemFactory
 from xmodule.modulestore import ModuleStoreEnum
 from xmodule.modulestore.tests.django_utils import ModuleStoreTestCase
 from common.djangoapps.course_modes.models import CourseMode
 from xblock.field_data import DictFieldData
+from django.utils import timezone
 import json
 import urllib.parse
 from .payment_link import PaymentLinkXBlock
@@ -57,6 +59,7 @@ class TestPaymentLinkXBlock(UrlResetMixin, ModuleStoreTestCase):
     def setUp(self):
         super(TestPaymentLinkXBlock, self).setUp()
         self.course = CourseFactory.create(org='foo', course='baz', run='bar')
+        aux = CourseOverview.get_from_id(self.course.id)
         self.xblock = self.make_an_xblock()
         with patch('common.djangoapps.student.models.cc.User.save'):
             # staff user
@@ -112,6 +115,7 @@ class TestPaymentLinkXBlock(UrlResetMixin, ModuleStoreTestCase):
         )
         response = self.xblock.get_context_author()
         self.assertEqual(response['is_enabled'], True)
+        self.assertEqual(response['is_expired'], False)
         self.assertEqual(response['ecommerce_payment_page'], '/basket/add/')
         self.assertEqual(response['verified_sku'], 'ASD')
     
@@ -135,6 +139,7 @@ class TestPaymentLinkXBlock(UrlResetMixin, ModuleStoreTestCase):
         )
         self.xblock.scope_ids.user_id = self.student.id
         response = self.xblock.get_context_student()
+        self.assertEqual(response['is_expired'], False)
         self.assertEqual(response['is_enabled'], True)
         self.assertEqual(response['is_enrolled'], True)
         self.assertEqual(response['is_staff'], False)
@@ -157,6 +162,7 @@ class TestPaymentLinkXBlock(UrlResetMixin, ModuleStoreTestCase):
         response = self.xblock.get_context_student()
         self.assertEqual(response['is_enabled'], True)
         self.assertEqual(response['is_enrolled'], True)
+        self.assertEqual(response['is_expired'], False)
         self.assertEqual(response['is_staff'], True)
         self.assertEqual(response['ecommerce_payment_page'], '/basket/add/')
         self.assertEqual(response['verified_sku'], 'ASD')
@@ -169,6 +175,7 @@ class TestPaymentLinkXBlock(UrlResetMixin, ModuleStoreTestCase):
         response = self.xblock.get_context_student()
         self.assertEqual(response['is_enrolled'], True)
         self.assertEqual(response['is_enabled'], False)
+        self.assertEqual(response['is_expired'], False)
         self.assertEqual(response['is_staff'], False)
 
     def test_context_student_not_enrolled(self):
@@ -178,5 +185,23 @@ class TestPaymentLinkXBlock(UrlResetMixin, ModuleStoreTestCase):
         self.xblock.scope_ids.user_id = None
         response = self.xblock.get_context_student()
         self.assertEqual(response['is_enrolled'], False)
+        self.assertEqual(response['is_expired'], False)
         self.assertEqual(response['is_enabled'], False)
         self.assertEqual(response['is_staff'], False)
+    
+    def test_course_expired(self):
+        """
+            Test if course end_date is expired
+        """
+        course = CourseOverview.get_from_id(self.course.id)
+        course.end_date = timezone.now() + timezone.timedelta(days=1)
+        course.save()
+        self.assertEqual(self.xblock.is_course_expired(), False)
+
+        course.end_date = None
+        course.save()
+        self.assertEqual(self.xblock.is_course_expired(), False)
+
+        course.end_date = timezone.now() - timezone.timedelta(days=1)
+        course.save()
+        self.assertEqual(self.xblock.is_course_expired(), True)

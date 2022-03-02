@@ -11,10 +11,16 @@
         <p class="Prrafobsico" style="text-align: justify; margin: 0cm 2.0cm .0001pt 2.0cm;"><span style="font-family: 'Helvetica','sans-serif'; color: #222222; background: white;" lang="ES-TRAD">Revisa cómo obtenerlo <a href="https://uabierta.uchile.cl/static/edx-uabierta/uploads/instructivo_pago_20210426.pdf" target="_blank">aquí</a></span></p>
 
     {% else %}
-        <div class="alert alert-warning" style="line-height: 1;">
-            <p>El curso <strong>no se ha configurado correctamente</strong>.</p>
-            <p>Contáctese con el equipo del curso o mesa de ayuda.</p>
-        </div>
+        {% if is_expired %}
+            <div class="alert alert-warning" style="line-height: 1;">
+                <p>Pago de certificación no disponible debido a término del periodo de compra.</p>
+            </div>
+        {% else %}
+            <div class="alert alert-warning" style="line-height: 1;">
+                <p>El curso <strong>no se ha configurado correctamente</strong>.</p>
+                <p>Contáctese con el equipo del curso o mesa de ayuda.</p>
+            </div>
+        {% endif %}
     {% endif %}
     
  </div>
